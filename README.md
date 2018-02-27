@@ -43,3 +43,8 @@ trend.pyx
 valid_count.pyx
 validmask.pyx
 ```
+
+## Neat Features
+
++ `'output_type'` can be added to multitemporal output steps in numpy string style.  If missing, things remain `'float32'`.
+   
