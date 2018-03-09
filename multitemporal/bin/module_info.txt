@@ -1,0 +1,164 @@
+# (1) per year, fixed outputs
+phenology.pyx {
+    nout: 5
+    output: [annmean, height, start, duration, argmax]
+    mode: peryear
+    params: [thresh, minval, maxval, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}    
+aveminmax.pyx: {
+    nout: 2
+    output: [avelow, avehigh]
+    mode: peryear
+    params: [num, minframe=1, maxframe=nfr]
+    inputtype: time
+    outputtype: stats
+}   
+daysofgreen.pyx: {
+    nout: 1
+    output: [count]
+    mode: peryear
+    params: [thresh, minval, maxval, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}
+disturbance.pyx: {
+    nout: 3
+    output: [longeventmag, longeventstart, longeventlength]
+    mode: peryear
+    params: [thresh, minval, maxval, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}
+simpletrend.pyx {
+    nout: 2
+    output: [aveslope, count]
+    mode: peryear
+    params: [minval, maxval, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}
+startofgreen.pyx {
+    nout: 1
+    output: [start]
+    mode: peryear
+    params: [thresh, minval, maxval, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}
+annualstats.pyx: {
+    nout: 5
+    output: [mean, std, min, max, count]
+    mode: peryear
+    params: [thresh, minframe=1, maxframe=nfr]
+    inputtype: any
+    outputtype: stats
+}
+summation.pyx {
+    nout: 2
+    output: [mean, count]
+    mode: peryear
+    params: [thresh, minframe=1, maxframe=nfr]
+    inputtype: any
+    outputtype: stats
+}
+
+# (2) per year, outputs match inputs
+gapfill.pyx: {
+    nout: nin
+    output: [...]
+    mode: peryear
+    params: [minval, maxval, maxgapfrac]
+    inputtype: time
+    outputtype time
+}
+runningmean.pyx {
+    nout: nin
+    output: [...]
+    mode: peryear
+    params: [window]
+    inputtype: time
+    outputtype: time
+}
+shifttime.pyx {
+    nout: nin
+    output: [...]
+    mode: peryear
+    params: [shift]
+    inputtype: time
+    outputtype: time
+}
+fft.pyx {
+    nout: nin
+    output: [...]
+    mode: peryear
+    params: []
+    inputtype: time
+    outputtype: stats
+}
+reclassify.pyx: {
+    nout: nin
+    output: [...]
+    mode: peryear
+    params: [newval_for_0, newval_for_1, ...]
+    inputtype: any
+    outputype: any
+}
+
+# (3) per year, number of outputs prescribed by caller
+recomposite.pyx {
+    nout: params[0]
+    output: [] # determined by nout
+    mode: peryear
+    params: [nout]
+    inputtype: time
+    outputtype: time
+}
+crossings.pyx {
+    nout: params[0]
+    output: [] # determined by ncross
+    mode: peryear
+    params: [ncross, thresh, minframe]
+    inpputtype: time
+    outputtype: stats
+}    
+
+# (4) interannual, fixed outputs
+interannualtrend.pyx {
+    nout: 2
+    output: [se_slope, t_slope]
+    mode: overall
+    params: [band]
+    inputtype: any
+    outputtype: stats
+}
+overallmean.pyx {
+    nout: 2
+    output: [mean, count]
+    mode: overall
+    params: [thresh, minframe, maxframe]
+    inputtype: time
+    outputtype: stats
+}
+
+# (5) interannual, outputs match inputs
+crop_rotation_detection.pyx {
+    nout: nin
+    output: [...]
+    mode: overall
+    params: []
+    inputtype: time
+    outputtype: stats
+}
+interannualslope.pyx: {
+    nout: nin
+    output: [...]
+    mode: overall
+    params: [minframe, maxframe]
+    inputtype: any
+    outputtype: stats
+}
+
+# (6) interannual, number of outputs prescibed by caller
+# NONE YET
