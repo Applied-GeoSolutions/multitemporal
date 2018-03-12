@@ -8,6 +8,9 @@ TESTDATA = os.path.join(CWD, 'test1')
 TESTCONF = os.path.join(CWD, 'test1.json')
 
 def test():
+    if not os.path.exists(TESTDATA):
+        print "unpacking {}".format(TESTDATA)
+        os.system('tar xvfz {}.tgz -C {}'.format(TESTDATA, os.path.split(TESTDATA)[0]))
     args = json.loads(open(TESTCONF).read())
     args['projname'] = 'test1cmp'
     args['projdir'] = TESTDATA
