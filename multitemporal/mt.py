@@ -330,7 +330,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='MultiTemporal Processor')
 
-    # NOTE: do not use argparse defaults. Will be handled separately below...
+    # NOTE: do not use argparse defaults. Will be handled separately below
     # TODO: allow all arguments to be specified on the command line
     # except "conf" which maybe will go away
 
@@ -384,8 +384,7 @@ def main():
     conf.update(args_dict)
 
     # apply defaults
-    # done after above so that defaults from one do not overrite the other
-    # there is probably a more clever way
+    # done after above so that defaults from one do not overwrite the other
     # ok for now -- some things just don't have defaults
     defaults = {
         'nproc' : 1,
