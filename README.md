@@ -14,7 +14,7 @@ Supported in part by NASA Interdisciplinary Science Grant to University of New H
 
 ## Current supported modules:
 
-Also see [this directory](https://bitbucket.org/appliedgeosolutions/multitemporal/src/3f754b97f6689a4377c680ab7b497d8b5071a89c/bin/?at=master)
+Also see [this directory](https://github.com/Applied-GeoSolutions/multitemporal/tree/master/multitemporal/bin)
 
 ```
 annualstats.pyx
@@ -50,8 +50,3 @@ trend.pyx
 valid_count.pyx
 validmask.pyx
 ```
-
-## Neat Features
-
-+ `'output_type'` can be added to multitemporal output steps in numpy string style.  If missing, things remain `'float32'`.
-   
