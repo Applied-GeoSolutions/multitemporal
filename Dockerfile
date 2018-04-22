@@ -23,3 +23,6 @@ COPY . /multitemporal
 RUN cd /multitemporal \
     && pip install -r requirements.txt \
     && pip install -e .
+
+WORKDIR /multitemporal
+VOLUME data
