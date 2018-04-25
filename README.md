@@ -1,13 +1,20 @@
-# README #
-
-
-## Multitemporal analysis
+# Multitemporal 
+(c) 2018 Applied Geosolutions, LLC
 
 This library provides an efficient means of flexibly performing time series analysis on stacks of gridded data. There is a core python application that breaks the processing job into pieces and launches workers to perform the processing. Each worker has a configurable sequence of processing steps. All the inputs and each step are prescribed in a user-conigured JSON files.
 
+Authors:
+
+- Bobby H. Braswell (rbraswell at ags.io)
+- Justin Fisk
+- Ian Cooke
+
+Supported in part by NASA Interdisciplinary Science Grant to University of New Hampshire
+"Tropical Forest Resilience and Vulnerability to Drought" (Michael Palace PI)
+
 ## Current supported modules:
 
-Also see [this directory](https://bitbucket.org/appliedgeosolutions/multitemporal/src/3f754b97f6689a4377c680ab7b497d8b5071a89c/bin/?at=master)
+Also see [this directory](https://github.com/Applied-GeoSolutions/multitemporal/tree/master/multitemporal/bin)
 
 ```
 annualstats.pyx
