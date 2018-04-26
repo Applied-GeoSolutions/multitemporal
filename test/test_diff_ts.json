@@ -1,5 +1,5 @@
 {
-    "projname" : "test_diff_ts",
+    "projname" : "test1_precip",
     "projdir"  : "/net/cluster/projects/multitemporal/data/test1",
     "outdir"   : "/net/cluster/projects/multitemporal/data/test1out",
     "dperframe": 1,
