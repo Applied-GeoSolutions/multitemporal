@@ -2,6 +2,7 @@ import argparse
 from copy import deepcopy
 import datetime
 from functools import partial
+import imp
 import importlib
 import json
 from multiprocessing import Pool
@@ -229,8 +230,13 @@ def run(projdir, outdir, projname, sources, steps,
     for step in steps:
 
         # get functions and parameters for each step
-        mod = importlib.import_module('multitemporal.bin.' + step['module'])
-        step['function'] = eval("mod." + step['module'])
+        if 'path' in step:
+            mod_info = imp.find_module(step['module'], [step['path']])
+            mod = imp.load_module('wcc', *mod_info)
+            step['function'] = getattr(mod, step['module'])
+        else:
+            mod = importlib.import_module('multitemporal.bin.' + step['module'])
+            step['function'] = eval("mod." + step['module'])
         step['params'] = np.array(step['params']).astype('float32')
         step['initial'] = False
 
