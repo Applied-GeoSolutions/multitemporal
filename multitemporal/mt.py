@@ -107,11 +107,13 @@ def worker(shared, job):
         if d.shape[0] == 1:
             d = d.reshape(d.shape[1], nyr, npx)
 
-        print step['name'], d.shape,
         results[step['name']] = step['function'](d, missing_out, step['params'])
         if step.get('output', False):
-            OUTPUT[step['name']][:, :, istart:iend] = results[step['name']]
-        print "done"
+            try:
+                OUTPUT[step['name']][:, :, istart:iend] = results[step['name']]
+            except Exception as e:
+                print('Exception in step "{}"'.format(step['name']))
+                raise e
     return str(job) + str(shared)
 
 
@@ -192,7 +194,9 @@ def run(projdir, outdir, projname, sources, steps,
             lastyr_check = lastyr
         else:
             if firstyr_check != firstyr or lastyr_check != lastyr:
-                raise Exception, "Export year ranges do not match"
+                emsg = ("Export year ranges do not match: {}!={} or {}!={}"
+                        .format(firstyr_check, firstyr, lastyr_check, lastyr))
+                print('Nota bene:\n\t' + emsg + '\n   This may be OK')
 
         doys = np.arange(366/dperframe).astype('int') + 1
         nfr = len(doys)
@@ -289,8 +293,16 @@ def run(projdir, outdir, projname, sources, steps,
         jobs.append((iblk, istart, iend, blkhgt))
     func = partial(worker, shared)
     if nproc > 1:
+        results = []
+        num_tasks = len(jobs)
         pool = Pool(processes=nproc)
-        results = pool.map(func, jobs)
+        prog=0
+        for i, r in enumerate(pool.imap(func, jobs, 1)):
+            pct = float(i) / num_tasks * 100
+            if pct // 10 > prog:
+                prog += 1
+                print('mt {:0.02f} complete.\r'.format(pct))
+            results.append(r)
     else:
         results = []
         for job in jobs:
@@ -403,11 +415,20 @@ def main():
     }
     for d in defaults:
         conf[d] = conf.get(d, defaults[d])
+    run_func = run
+    if not conf['nongips']:
+        run_func = run_gipsexport
+    try:
+        run_func(**conf)
+    except Exception as e:
+        from pprint import pformat
+        import traceback
+        print(e)
+        print(traceback.format_exc())
+        import pdb; pdb.set_trace();
 
-    if conf['nongips']:
-        run(**conf)
-    else:
-        run_gipsexport(**conf)
+        sys.exit(333)
+    return sys.exit(0)
 
 
 if __name__ == "__main__":
