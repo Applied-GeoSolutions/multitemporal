@@ -236,7 +236,7 @@ def run(projdir, outdir, projname, sources, steps,
         # get functions and parameters for each step
         if 'path' in step:
             mod_info = imp.find_module(step['module'], [step['path']])
-            mod = imp.load_module('wcc', *mod_info)
+            mod = imp.load_module(step['module'], *mod_info)
             step['function'] = getattr(mod, step['module'])
         else:
             mod = importlib.import_module('multitemporal.bin.' + step['module'])
