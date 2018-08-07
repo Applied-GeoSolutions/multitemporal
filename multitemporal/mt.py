@@ -16,7 +16,6 @@ gdal.UseExceptions()
 
 import sharedmem
 
-from pdb import set_trace
 
 
 # output will be a dict of shared memory arrays
@@ -425,9 +424,7 @@ def main():
         import traceback
         print(e)
         print(traceback.format_exc())
-        import pdb; pdb.set_trace();
-
-        sys.exit(333)
+        sys.exit(33)
     return sys.exit(0)
 
 
