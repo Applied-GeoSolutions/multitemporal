@@ -1,0 +1,23 @@
+{
+    "projname" : "test1_ndvi",
+    "projdir"  : "/net/cluster/projects/multitemporal/data/test1",
+    "outdir"   : "/net/cluster/projects/multitemporal/data/test1out",
+    "dperframe": 1,
+    "sources":
+    [
+        {
+            "name"   : "ndvi",
+            "regexp" : "^(\\d{7})_L.._ndvi-toa.tif$",
+            "bandnum": 1
+        }
+    ],
+    "steps":
+    [
+        {
+            "module" : "annualstats_robust",
+            "params" : [],
+            "inputs" : "ndvi",
+            "output" : true
+        }
+    ]
+}

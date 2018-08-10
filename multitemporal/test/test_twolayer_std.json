@@ -1,0 +1,28 @@
+{
+    "projname" : "test1_ndvi_precip",
+    "projdir"  : "/net/cluster/projects/multitemporal/data/test1",
+    "outdir"   : "/net/cluster/projects/multitemporal/data/test1out",
+    "dperframe": 1,
+    "sources":
+    [
+        {
+            "name"   : "chirps",
+            "regexp" : "^(\\d{7})_chirps_precip.tif$",
+            "bandnum": 1
+        },
+        {
+            "name"   : "ndvi",
+            "regexp" : "^(\\d{7})_L.._ndvi-toa.tif$",
+            "bandnum": 1
+        }
+    ],
+    "steps":
+    [
+        {
+            "module" : "twolayer_std",
+            "params" : [],
+            "inputs" : ["ndvi","chirps"],
+            "output" : true
+        }
+    ]
+}
