@@ -17,6 +17,8 @@ gdal.UseExceptions()
 import sharedmem
 
 
+class MTConfigError(Exception):
+    pass
 
 # output will be a dict of shared memory arrays
 OUTPUT = {}
@@ -68,7 +70,19 @@ def worker(shared, job):
             data = missing_out + np.zeros((nb, nfr, nyr, npx), dtype='float32')
 
         else:
-            assert nt == len(source['paths'])
+            if nt != len(source['paths']):
+                print(('MT worker:\n\t'
+                       'nt: {}\n\t'
+                       'source["name"]: {}\n\t'
+                       'source["regexp"]: {}\n\t'
+                       'source dir: {}\n\t'
+                       'len(source["paths"]: {}\n\t'
+                       'len(non-empty-src-paths): {}\n')
+                      .format(nt, source['name'], source['regexp'],
+                              set((os.path.basename(sp)
+                                   for sp in source['paths'])),
+                              len(source['paths']),
+                              len([s for s in source['paths'] if s != ''])))
 
         for ipath, path in enumerate(source['paths']):
             if path == "":
@@ -91,14 +105,19 @@ def worker(shared, job):
             data[ib, ifr, iyr, wgood] = \
                 source['offset'] + source['scale']*values[wgood]
             del fp
-
+    
     sourcenames = [source['name'] for source in sources]
     results = {}
 
     for step in steps:
 
         if step['initial'] == True:
-            bix = [sourcenames.index(si) for si in step['inputs']]
+            try:
+                bix = [sourcenames.index(si) for si in step['inputs']]
+            except ValueError as ve:
+                raise MTConfigError(
+                    'step {} might be mixing sources and outputs'
+                    .format(step['name']))
             d = data[bix,:,:,:]
         else:
             d = np.array([results[si] for si in step['inputs']])
@@ -123,8 +142,9 @@ def run(projdir, outdir, projname, sources, steps,
     global OUTPUT
 
     for k, source in enumerate(sources):
-
+        print("source: {}".format(source['name']))
         paths = reglob(projdir, source['regexp'])
+
         if len(paths) == 0:
             print "there are no data paths for %s" % projdir
             return
@@ -215,13 +235,13 @@ def run(projdir, outdir, projname, sources, steps,
 
         source['paths'] = selpaths
         pctcomplete = float(ncomplete)/ntotal
-
         print "number of paths", len(selpaths)
         print "ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
             ncomplete, ntotal, pctcomplete, firstyr, lastyr
-        assert pctcomplete > compthresh,\
-            "not enough valid data (%f < %f) percent" %\
-            (pctcomplete, compthresh)
+        if pctcomplete < compthresh:
+            msg = ("not enough valid data ({} < {}) percent, for this source"
+                   .format(pctcomplete, compthresh))
+            raise Exception(msg, source)
 
     # process the steps
 
@@ -251,8 +271,12 @@ def run(projdir, outdir, projname, sources, steps,
                 thisnin = nfr
                 step['initial'] = True
             else:
-                parentstep = [s for s in steps if s['name']==thisinput][0]
-                thisnin = parentstep['nout']
+                parentsteps = [s for s in steps if s['name']==thisinput]
+                if len(parentsteps) != 1:
+                    raise MTConfigError(
+                        'specified input: {}\n\tpossible inputs: {}'
+                        .format(thisinput, [s['name'] for s in steps]))
+                thisnin = parentsteps[0]['nout']
             if 'nin' in step:
                 assert step['nin'] == thisnin, "Number of inputs do not match"
             else:
