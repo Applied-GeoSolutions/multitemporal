@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## UNRELEASED
+## v0.5.0
 ### Changed
 * made it such that multitemporal is OK with different sized data stacks, may
   be needed in some cases that use shifttime module.
@@ -17,6 +17,7 @@ and this project adheres to
 ### Fixed
 * days of green formatting 
 * removed hardcoded 'wcc'
+* divide by zero in simplelinearregression.pyx
 
 ## v0.4.1
 ### Fixed
