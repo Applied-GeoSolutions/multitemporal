@@ -1,0 +1,23 @@
+{
+    "projname" : "test1_precip",
+    "projdir"  : "/net/cluster/projects/multitemporal/data/test1",
+    "outdir"   : "/net/cluster/projects/multitemporal/data/test1out",
+    "dperframe": 1,
+    "sources":
+    [
+        {
+            "name"   : "chirps",
+            "regexp" : "^(\\d{7})_chirps_precip.tif$",
+            "bandnum": 1
+        }
+    ],
+    "steps":
+    [
+        {
+            "module" : "recomposite_count",
+            "params" : [12,0],
+            "inputs" : "chirps",
+            "output" : true
+        }
+    ]
+}

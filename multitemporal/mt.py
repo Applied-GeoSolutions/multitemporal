@@ -16,8 +16,9 @@ gdal.UseExceptions()
 
 import sharedmem
 
-from pdb import set_trace
 
+class MTConfigError(Exception):
+    pass
 
 # output will be a dict of shared memory arrays
 OUTPUT = {}
@@ -69,7 +70,19 @@ def worker(shared, job):
             data = missing_out + np.zeros((nb, nfr, nyr, npx), dtype='float32')
 
         else:
-            assert nt == len(source['paths'])
+            if nt != len(source['paths']):
+                print(('MT worker:\n\t'
+                       'nt: {}\n\t'
+                       'source["name"]: {}\n\t'
+                       'source["regexp"]: {}\n\t'
+                       'source dir: {}\n\t'
+                       'len(source["paths"]: {}\n\t'
+                       'len(non-empty-src-paths): {}\n')
+                      .format(nt, source['name'], source['regexp'],
+                              set((os.path.basename(sp)
+                                   for sp in source['paths'])),
+                              len(source['paths']),
+                              len([s for s in source['paths'] if s != ''])))
 
         for ipath, path in enumerate(source['paths']):
             if path == "":
@@ -92,14 +105,19 @@ def worker(shared, job):
             data[ib, ifr, iyr, wgood] = \
                 source['offset'] + source['scale']*values[wgood]
             del fp
-
+    
     sourcenames = [source['name'] for source in sources]
     results = {}
 
     for step in steps:
 
         if step['initial'] == True:
-            bix = [sourcenames.index(si) for si in step['inputs']]
+            try:
+                bix = [sourcenames.index(si) for si in step['inputs']]
+            except ValueError as ve:
+                raise MTConfigError(
+                    'step {} might be mixing sources and outputs'
+                    .format(step['name']))
             d = data[bix,:,:,:]
         else:
             d = np.array([results[si] for si in step['inputs']])
@@ -107,11 +125,13 @@ def worker(shared, job):
         if d.shape[0] == 1:
             d = d.reshape(d.shape[1], nyr, npx)
 
-        print step['name'], d.shape,
         results[step['name']] = step['function'](d, missing_out, step['params'])
         if step.get('output', False):
-            OUTPUT[step['name']][:, :, istart:iend] = results[step['name']]
-        print "done"
+            try:
+                OUTPUT[step['name']][:, :, istart:iend] = results[step['name']]
+            except Exception as e:
+                print('Exception in step "{}"'.format(step['name']))
+                raise e
     return str(job) + str(shared)
 
 
@@ -122,8 +142,9 @@ def run(projdir, outdir, projname, sources, steps,
     global OUTPUT
 
     for k, source in enumerate(sources):
-
+        print("source: {}".format(source['name']))
         paths = reglob(projdir, source['regexp'])
+
         if len(paths) == 0:
             print "there are no data paths for %s" % projdir
             return
@@ -192,7 +213,9 @@ def run(projdir, outdir, projname, sources, steps,
             lastyr_check = lastyr
         else:
             if firstyr_check != firstyr or lastyr_check != lastyr:
-                raise Exception, "Export year ranges do not match"
+                emsg = ("Export year ranges do not match: {}!={} or {}!={}"
+                        .format(firstyr_check, firstyr, lastyr_check, lastyr))
+                print('Nota bene:\n\t' + emsg + '\n   This may be OK')
 
         doys = np.arange(366/dperframe).astype('int') + 1
         nfr = len(doys)
@@ -212,13 +235,13 @@ def run(projdir, outdir, projname, sources, steps,
 
         source['paths'] = selpaths
         pctcomplete = float(ncomplete)/ntotal
-
         print "number of paths", len(selpaths)
         print "ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
             ncomplete, ntotal, pctcomplete, firstyr, lastyr
-        assert pctcomplete > compthresh,\
-            "not enough valid data (%f < %f) percent" %\
-            (pctcomplete, compthresh)
+        if pctcomplete < compthresh:
+            msg = ("not enough valid data ({} < {}) percent, for this source"
+                   .format(pctcomplete, compthresh))
+            raise Exception(msg, source)
 
     # process the steps
 
@@ -232,7 +255,7 @@ def run(projdir, outdir, projname, sources, steps,
         # get functions and parameters for each step
         if 'path' in step:
             mod_info = imp.find_module(step['module'], [step['path']])
-            mod = imp.load_module('wcc', *mod_info)
+            mod = imp.load_module(step['module'], *mod_info)
             step['function'] = getattr(mod, step['module'])
         else:
             mod = importlib.import_module('multitemporal.bin.' + step['module'])
@@ -248,8 +271,12 @@ def run(projdir, outdir, projname, sources, steps,
                 thisnin = nfr
                 step['initial'] = True
             else:
-                parentstep = [s for s in steps if s['name']==thisinput][0]
-                thisnin = parentstep['nout']
+                parentsteps = [s for s in steps if s['name']==thisinput]
+                if len(parentsteps) != 1:
+                    raise MTConfigError(
+                        'specified input: {}\n\tpossible inputs: {}'
+                        .format(thisinput, [s['name'] for s in steps]))
+                thisnin = parentsteps[0]['nout']
             if 'nin' in step:
                 assert step['nin'] == thisnin, "Number of inputs do not match"
             else:
@@ -289,8 +316,16 @@ def run(projdir, outdir, projname, sources, steps,
         jobs.append((iblk, istart, iend, blkhgt))
     func = partial(worker, shared)
     if nproc > 1:
+        results = []
+        num_tasks = len(jobs)
         pool = Pool(processes=nproc)
-        results = pool.map(func, jobs)
+        prog=0
+        for i, r in enumerate(pool.imap(func, jobs, 1)):
+            pct = float(i) / num_tasks * 100
+            if pct // 10 > prog:
+                prog += 1
+                print('mt {:0.02f} complete.\r'.format(pct))
+            results.append(r)
     else:
         results = []
         for job in jobs:
@@ -403,11 +438,18 @@ def main():
     }
     for d in defaults:
         conf[d] = conf.get(d, defaults[d])
-
-    if conf['nongips']:
-        run(**conf)
-    else:
-        run_gipsexport(**conf)
+    run_func = run
+    if not conf['nongips']:
+        run_func = run_gipsexport
+    try:
+        run_func(**conf)
+    except Exception as e:
+        from pprint import pformat
+        import traceback
+        print(e)
+        print(traceback.format_exc())
+        sys.exit(33)
+    return sys.exit(0)
 
 
 if __name__ == "__main__":
