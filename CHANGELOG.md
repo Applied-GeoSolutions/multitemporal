@@ -7,6 +7,7 @@ and this project adheres to
 
 ## v0.5.0
 ### Changed
+* add requirement that fusion2 regression uses the non-interpolated values
 * made it such that multitemporal is OK with different sized data stacks, may
   be needed in some cases that use shifttime module.
 
