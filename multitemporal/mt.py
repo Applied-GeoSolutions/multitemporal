@@ -253,13 +253,15 @@ def run(projdir, outdir, projname, sources, steps,
     for step in steps:
 
         # get functions and parameters for each step
-        if 'path' in step:
-            mod_info = imp.find_module(step['module'], [step['path']])
-            mod = imp.load_module(step['module'], *mod_info)
-            step['function'] = getattr(mod, step['module'])
-        else:
+        try:
+            # TODO: This reserves the name of multitemporal builtin modules.
+            #       Perhaps some sort of module renaming for builtin modules
+            #       should occur here?
             mod = importlib.import_module('multitemporal.bin.' + step['module'])
             step['function'] = eval("mod." + step['module'])
+        except ImportError:
+            mod = importlib.import_module(step['module'])
+            step['function'] = eval("mod." + step['module'].split('.')[-1])
         step['params'] = np.array(step['params']).astype('float32')
         step['initial'] = False
 
