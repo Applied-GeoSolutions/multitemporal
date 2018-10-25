@@ -261,7 +261,12 @@ def run(projdir, outdir, projname, sources, steps,
             step['function'] = eval("mod." + step['module'])
         except ImportError:
             mod = importlib.import_module(step['module'])
+        try:
+            mod = importlib.import_module(step['module'])
             step['function'] = eval("mod." + step['module'].split('.')[-1])
+        except ImportError:
+            mod = importlib.import_module('multitemporal.bin.' + step['module'])
+            step['function'] = eval("mod." + step['module'])
         step['params'] = np.array(step['params']).astype('float32')
         step['initial'] = False
 
