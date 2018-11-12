@@ -9,44 +9,25 @@ Authors:
 - Justin Fisk
 - Ian Cooke
 
-Supported in part by NASA Interdisciplinary Science Grant to University of New Hampshire
-"Tropical Forest Resilience and Vulnerability to Drought" (Michael Palace PI)
+Supported in part by NASA Interdisciplinary Science Grant (NASA-IDS)
+#NNX14AD31G -- **Drought-induced vegetation change and fire in Amazonian
+forests: past, present, and future** to University of New Hampshire (Michael Palace, PI) 
 
 ## Current supported modules:
 
 Also see [this directory](https://github.com/Applied-GeoSolutions/multitemporal/tree/master/multitemporal/bin)
 
 ```
-annualstats.pyx
-anomindex.pyx
-aveminmax.pyx
-calrojas.pyx
-cfraction.pyx
-crop_rotation_detection.pyx
-crossings.pyx
-daysofgreen.pyx
-difference.pyx
-disturbance.pyx
-fft.pyx
-fusion.pyx
+correlate.pyx
+diff_ts.pyx
 gapfill.pyx
-interannualslope.pyx
-interannualtrend.pyx
+interpolate.pyx
 multiply.pyx
-optis_windows.pyx
-overallmean.pyx
+passthrough.pyx
 phenology.pyx
-quicksort.pyx
-reclassify.pyx
-recomposite_count.pyx
 recomposite.pyx
-runningmean.pyx
-shifttime.pyx
+screen.pyx
 simpletrend.pyx
-slice.pyx
-startofgreen.pyx
 summation.pyx
-trend.pyx
-valid_count.pyx
 validmask.pyx
 ```
