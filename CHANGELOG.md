@@ -5,10 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v1.0.0
 ### Changed
-* instead of specifying a `path` argument for external modules, simply provide
-  the name of any importable module.
+* BREAKING CHANGE: instead of specifying a `path` argument for external
+  modules, simply provide the name of any importable module.
 
 ## v0.5.0
 ### Changed
@@ -21,7 +21,7 @@ and this project adheres to
 * progress reporting every 10% of the way through the job
 
 ### Fixed
-* days of green formatting 
+* days of green formatting
 * removed hardcoded 'wcc'
 * divide by zero in simplelinearregression.pyx
 
@@ -39,4 +39,3 @@ and this project adheres to
 
 ### Fixed
 - fixed versioning with file and consistent imports in package and setup.py
-
