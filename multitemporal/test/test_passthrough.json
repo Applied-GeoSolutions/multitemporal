@@ -1,0 +1,8 @@
+{
+    "projname" : "test1_ndviy_chirpsx",
+    "projdir"  : "/multitemporal/data/test1",
+    "outdir"   : "/multitemporal/data/test1out",
+    "dperframe": 1,
+    "sources"  : [{"name": "ndvi", "regexp": "^(\\d{7})_L.._ndvi-toa.tif$", "bandnum": 1}],
+    "steps"    : [{"module": "passthrough", "params": [], "inputs": ["ndvi"], "output": true}]
+}
