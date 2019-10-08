@@ -1,9 +1,14 @@
 import imp
 from setuptools import setup, Extension, find_packages
+
+import numpy
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
-import numpy
+from Cython.Compiler import Options
+
+Options.language_level = 2 # as in python 2; silences a warning
+
 
 
 __version__ = imp.load_source('multitemporal.version', 'multitemporal/version.py').__version__
