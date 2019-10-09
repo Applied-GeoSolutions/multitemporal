@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
+from builtins import map
+from builtins import range
+from past.utils import old_div
 import os
 from multiprocessing import Pool
 import numpy as np
@@ -15,14 +19,14 @@ W = 1024
 MEM0 = None
 
 def mem():
-    tot_m, used_m, free_m = map(
+    tot_m, used_m, free_m = list(map(
         int, os.popen('free -t -m').readlines()[-1].split()[1:]
-    )
+    ))
     return float(used_m)
 
 def worker(job):
     global MEM0
-    d = M/N
+    d = old_div(M,N)
     istart = job*d
     iend = job*d + d
     print("starting", job, istart, iend, mem() - MEM0)
@@ -39,7 +43,7 @@ def main():
     MEM0 = mem()
     print("initial:", mem() - MEM0)
     data = sharedmem.empty((M,W,W), dtype='f4')
-    jobs = range(N)
+    jobs = list(range(N))
     print(mem() - MEM0)
     pool = Pool(processes=NPROC)
     results = pool.map(worker, jobs)

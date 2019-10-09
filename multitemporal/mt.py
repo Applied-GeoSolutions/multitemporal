@@ -1,4 +1,9 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import argparse
 from copy import deepcopy
 import datetime
@@ -67,7 +72,7 @@ def worker(shared, job):
     for ib, source in enumerate(sources):
         if ib == 0:
             nt = len(source['paths'])
-            nyr = nt/nfr
+            nyr = old_div(nt,nfr)
             data = missing_out + np.zeros((nb, nfr, nyr, npx), dtype='float32')
 
         else:
@@ -101,7 +106,7 @@ def worker(shared, job):
             wgood = np.where(values != source['missing_in'])
             if len(wgood[0]) == 0:
                 continue
-            iyr = ipath / nfr
+            iyr = old_div(ipath, nfr)
             ifr = ipath % nfr
             data[ib, ifr, iyr, wgood] = \
                 source['offset'] + source['scale']*values[wgood]
@@ -218,7 +223,7 @@ def run(projdir, outdir, projname, sources, steps,
                         .format(firstyr_check, firstyr, lastyr_check, lastyr))
                 print('Nota bene:\n\t' + emsg + '\n   This may be OK')
 
-        doys = np.arange(366/dperframe).astype('int') + 1
+        doys = np.arange(old_div(366,dperframe)).astype('int') + 1
         nfr = len(doys)
 
         selpaths = []
@@ -302,7 +307,7 @@ def run(projdir, outdir, projname, sources, steps,
                 (step['nout'], step['nyrout'], height*width), dtype='f4')
             OUTPUT[step['name']][...] = missing_out
 
-    nblocks = height / blkrow
+    nblocks = old_div(height, blkrow)
     if height % blkrow == 0:
         lastblkrow = blkrow
     else:
@@ -429,7 +434,7 @@ def main():
         conf = json.load(sys.stdin)
 
     # override json configuration options with those from CLI
-    args_dict = dict((k,v) for k,v in vars(args).iteritems() if v is not None)
+    args_dict = dict((k,v) for k,v in vars(args).items() if v is not None)
     conf.update(args_dict)
 
     # apply defaults
