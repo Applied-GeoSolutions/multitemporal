@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os
 from multiprocessing import Pool
 import numpy as np
@@ -24,11 +25,11 @@ def worker(job):
     d = M/N
     istart = job*d
     iend = job*d + d
-    print "starting", job, istart, iend, mem() - MEM0
+    print("starting", job, istart, iend, mem() - MEM0)
     for i in range(W):
         for j in range(W):
             data[istart:iend, :, :] = istart
-    print "done", job, istart, iend, mem() - MEM0
+    print("done", job, istart, iend, mem() - MEM0)
     return 1
 
 data = None
@@ -36,13 +37,13 @@ def main():
     global MEM0
     global data
     MEM0 = mem()
-    print "initial:", mem() - MEM0
+    print("initial:", mem() - MEM0)
     data = sharedmem.empty((M,W,W), dtype='f4')
     jobs = range(N)
-    print mem() - MEM0
+    print(mem() - MEM0)
     pool = Pool(processes=NPROC)
     results = pool.map(worker, jobs)
-    print mem() - MEM0
+    print(mem() - MEM0)
 
 if __name__ == "__main__":
 

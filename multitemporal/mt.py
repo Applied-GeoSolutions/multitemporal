@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 from copy import deepcopy
 import datetime
@@ -146,7 +147,7 @@ def run(projdir, outdir, projname, sources, steps,
         paths = reglob(projdir, source['regexp'])
 
         if len(paths) == 0:
-            print "there are no data paths for %s" % projdir
+            print("there are no data paths for %s" % projdir)
             return
 
         pathdict = {}
@@ -190,7 +191,7 @@ def run(projdir, outdir, projname, sources, steps,
                 if 'missing_in' not in source:
                     source['missing_in'] = band.GetNoDataValue()
                 if source['missing_in'] is None:
-                    raise Exception, "There is no missing value"
+                    raise Exception("There is no missing value")
                 if k == 0:
                     proj_check = proj
                     geo_check = geo
@@ -200,8 +201,8 @@ def run(projdir, outdir, projname, sources, steps,
                     GEO_TOLER = 0.0001
                     if proj_check != proj or width_check != width or height_check != height \
                        or (np.array([x[1]-x[0] for x in zip(geo, geo_check)]) > GEO_TOLER).any():
-                        raise Exception, "Export contents do not match in size, projection,"\
-                            "or geospatial properties"
+                        raise Exception("Export contents do not match in size, projection,"\
+                            "or geospatial properties")
 
                 initialized = True
 
@@ -229,15 +230,15 @@ def run(projdir, outdir, projname, sources, steps,
                 try:
                     selpaths.append(pathdict[(year, doy)])
                     ncomplete += 1
-                except Exception, e:
+                except Exception as e:
                     selpaths.append('')
                 ntotal += 1
 
         source['paths'] = selpaths
         pctcomplete = float(ncomplete)/ntotal
-        print "number of paths", len(selpaths)
-        print "ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
-            ncomplete, ntotal, pctcomplete, firstyr, lastyr
+        print("number of paths", len(selpaths))
+        print("ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
+            ncomplete, ntotal, pctcomplete, firstyr, lastyr)
         if pctcomplete < compthresh:
             msg = ("not enough valid data ({} < {}) percent, for this source"
                    .format(pctcomplete, compthresh))
@@ -296,7 +297,7 @@ def run(projdir, outdir, projname, sources, steps,
         except:
             step['nyrout'] = nyr
         if step.get('output', False):
-            print "output", mod, (step['nout'], step['nyrout'], height*width)
+            print("output", mod, (step['nout'], step['nyrout'], height*width))
             OUTPUT[step['name']] = sharedmem.empty(
                 (step['nout'], step['nyrout'], height*width), dtype='f4')
             OUTPUT[step['name']][...] = missing_out
