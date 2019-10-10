@@ -5,7 +5,7 @@ import json
 import pytest
 from osgeo import gdal
 
-from multitemporal.mt import run
+from multitemporal import mt
 
 def data_dir():
     return os.path.join(os.path.dirname(__file__), 'data')
@@ -24,7 +24,7 @@ TESTCONF = os.path.join(CWD, 'test_correlate.json')
 #     args['projname'] = 'test1cmp'
 #     args['projdir'] = TESTDATA
 #     args['outdir'] = args['projdir'] + 'out'
-#     run(**args)
+#     mt.run(**args)
 #     outfile1 = os.path.join(args['outdir'], 'test1_correlate.tif')
 #     outfile1cmp = os.path.join(args['outdir'], 'test1cmp_correlate.tif')
 #     x1 = gdal.Open(outfile1).ReadAsArray()
@@ -47,9 +47,17 @@ def test_passthrough(tmpdir):
     expected_fp = os.path.join(data_dir(), 'passthrough/expected/', output_bn)
     actual_fp = str(tmpdir.join(output_bn))
 
-    run(projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), **test_passthrough_args)
+    mt.run(projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), **test_passthrough_args)
 
     actual = gdal.Open(actual_fp).ReadAsArray()
     expected = gdal.Open(expected_fp).ReadAsArray()
     # both pytest & numpy have approximate-equality abilities if needed
     assert (expected == actual).all()
+
+def test_find_band():
+    """Check mt.find_band for normal case."""
+    test_raster_fp = os.path.join(data_dir(), '2016004_LC8_ndvi-toa.tif')
+    test_raster_fo = gdal.Open(test_raster_fp)
+    expected_band_name = 'ndvi'
+    actual_band_name = mt.find_band(test_raster_fo, expected_band_name).GetDescription()
+    assert expected_band_name == actual_band_name
