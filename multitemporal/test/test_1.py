@@ -39,7 +39,8 @@ test_passthrough_args = {
     "steps"    : [{"module": "passthrough", "params": [], "inputs": ["ndvi"], "output": True}]}
 
 
-def test_passthrough(tmpdir):
+@pytest.mark.parametrize("nproc", [1, 2])
+def test_passthrough(nproc, tmpdir):
     """Use the passthrough module as a way to test mt throughput."""
     # refactor out for additional tests and follow pattern in files:
     input_dir = os.path.join(data_dir(), 'passthrough/input')
@@ -47,7 +48,8 @@ def test_passthrough(tmpdir):
     expected_fp = os.path.join(data_dir(), 'passthrough/expected/', output_bn)
     actual_fp = str(tmpdir.join(output_bn))
 
-    mt.run(projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), **test_passthrough_args)
+    mt.run(projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), nproc=nproc,
+           **test_passthrough_args)
 
     actual = gdal.Open(actual_fp).ReadAsArray()
     expected = gdal.Open(expected_fp).ReadAsArray()
