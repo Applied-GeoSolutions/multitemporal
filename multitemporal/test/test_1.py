@@ -1,6 +1,7 @@
 from builtins import str
 import os
 import json
+import copy
 
 import pytest
 from osgeo import gdal
@@ -55,6 +56,33 @@ def test_passthrough(nproc, tmpdir):
     expected = gdal.Open(expected_fp).ReadAsArray()
     # both pytest & numpy have approximate-equality abilities if needed
     assert (expected == actual).all()
+
+def test_two_sources(tmpdir):
+    """As test_passthrough, but with two sources.
+
+    This test doesn't produce a meaningful raster (as it's all zeroes) but it
+    does demonstrate that the code paths don't crash.
+    """
+    input_dir = os.path.join(data_dir(), 'input')
+    output_bn = 'tpt_proj_correlate.tif'
+    expected_fp = os.path.join(data_dir(), 'expected', output_bn)
+    actual_fp = str(tmpdir.join(output_bn))
+
+    mt.run(
+        projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), dperframe=1,
+        compthresh=0.01, # so smaller dataset will work
+        sources=[
+            {'name': 'ndvi',   'regexp': r'^(\d{7})_L.._ndvi-toa.tif$',  'bandnum': 1},
+            {'name': 'precip', 'regexp': r'^(\d{7})_chirps_precip.tif$', 'bandnum': 1},
+        ],
+        # band to work on in both inputs ---------v
+        steps=[{'module': 'correlate', 'params': [0], 'inputs': ['ndvi', 'precip'], 'output': True}],
+    )
+
+    actual = gdal.Open(actual_fp).ReadAsArray()
+    expected = gdal.Open(expected_fp).ReadAsArray()
+    assert (expected == actual).all()
+
 
 def test_find_band():
     """Check mt.find_band for normal case."""

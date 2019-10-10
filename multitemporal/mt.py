@@ -280,6 +280,7 @@ def run(projdir, outdir, projname, sources, steps,
 
         # get functions and parameters for each step by trying to import the
         # steps in different ways until something works.
+        # TODO however the implementation sorta 'stutters' with unneeded extra steps
         try:
             # TODO: This reserves the name of multitemporal builtin modules.
             #       Perhaps some sort of module renaming for builtin modules
