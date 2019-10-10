@@ -145,24 +145,42 @@ def run(projdir, outdir, projname, sources, steps,
         blkrow=10, compthresh=0.1, nproc=1, missing_out=-32768.,
         dperframe=1, ymd=False,
         **kwargs):
+    """Run the processing pipeline defined by `steps`.
+
+    :param projdir:  Where to search for source data
+    :param outdir:  Where to put the outputs
+    :param projname:  Prefix for output files
+    :param sources:  Product types such as 'ndvi', likely from gips outputs
+    :param steps:  Defines the processing pipeline; a series of modules that
+        must implement a standard interface (TODO document this interface).
+    :param blkrow:  dunno lol
+    :param compthresh:  sorta a minimum required ratio of good data to total area
+    :param nproc:  Number of worker processes.
+    :param missing_out:  no-data value to be used in outputs probably.
+    :param dperframe: dunno lol
+    :param ymd: use <year><month><day> if ymd else <year><doy> (why not just pass in the format?)
+    :param kwargs: unused
+    :return: None; see if it worked by try-catching the call
+    """
     global OUTPUT
 
+    # set up by finding sources, organizing them, and configuring the run
     for k, source in enumerate(sources):
         print("source: {}".format(source['name']))
-        paths = reglob(projdir, source['regexp'])
+        source_paths = reglob(projdir, source['regexp'])
 
-        if len(paths) == 0:
+        if len(source_paths) == 0:
             print("there are no data paths for %s" % projdir)
             return
 
-        pathdict = {}
+        date_to_source_path = {}
         years = set()
         doys = set()
         initialized = False
 
-        for i, path in enumerate(paths):
-            filename = os.path.split(path)[1]
-            datestr = re.findall(source['regexp'], filename)[0]
+        for i, source_path in enumerate(source_paths):
+            source_bn = os.path.basename(source_path)
+            datestr = re.findall(source['regexp'], source_bn)[0]
             if not ymd:
                 # default: YYYYDDD
                 date = datetime.datetime.strptime(datestr, '%Y%j')
@@ -174,10 +192,10 @@ def run(projdir, outdir, projname, sources, steps,
             doy = int(date.strftime('%j'))
             years.add(year)
             doys.add(doy)
-            pathdict[(year, doy)] = path
+            date_to_source_path[(year, doy)] = source_path
 
             if not initialized:
-                fp = gdal.Open(path)
+                fp = gdal.Open(source_path)
                 try:
                     if 'bandname' in source:
                         band = find_band(fp, source['bandname'])
@@ -203,6 +221,8 @@ def run(projdir, outdir, projname, sources, steps,
                     width_check = width
                     height_check = height
                 else:
+                    # after the first source path establishes projection etc, confirm these values
+                    # all match for the rest of the source paths
                     GEO_TOLER = 0.0001
                     if proj_check != proj or width_check != width or height_check != height \
                        or (np.array([x[1]-x[0] for x in zip(geo, geo_check)]) > GEO_TOLER).any():
@@ -233,7 +253,7 @@ def run(projdir, outdir, projname, sources, steps,
         for year in range(firstyr, lastyr+1):
             for doy in doys:
                 try:
-                    selpaths.append(pathdict[(year, doy)])
+                    selpaths.append(date_to_source_path[(year, doy)])
                     ncomplete += 1
                 except Exception as e:
                     selpaths.append('')
@@ -258,7 +278,8 @@ def run(projdir, outdir, projname, sources, steps,
 
     for step in steps:
 
-        # get functions and parameters for each step
+        # get functions and parameters for each step by trying to import the
+        # steps in different ways until something works.
         try:
             # TODO: This reserves the name of multitemporal builtin modules.
             #       Perhaps some sort of module renaming for builtin modules
@@ -280,10 +301,12 @@ def run(projdir, outdir, projname, sources, steps,
         if not isinstance(step['inputs'], list):
             step['inputs'] = [step['inputs']]
         for thisinput in step['inputs']:
+            # if this input is in the sources then we know it's a starting point for the pipeline:
             if thisinput in [source['name'] for source in sources]:
-                thisnin = nfr
+                thisnin = nfr # nfr == len(doys)
                 step['initial'] = True
             else:
+                # handle intermediary steps in the pipeline; only one parent is allowed
                 parentsteps = [s for s in steps if s['name']==thisinput]
                 if len(parentsteps) != 1:
                     raise MTConfigError(
@@ -330,7 +353,7 @@ def run(projdir, outdir, projname, sources, steps,
     func = partial(worker, shared)
     if nproc > 1:
         results = []
-        num_tasks = len(jobs)
+        num_tasks = len(jobs) # == nblocks every time
         pool = Pool(processes=nproc)
         prog=0
         for i, r in enumerate(pool.imap(func, jobs, 1)):
