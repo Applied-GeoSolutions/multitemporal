@@ -43,9 +43,9 @@ test_passthrough_args = {
 def test_passthrough(nproc, tmpdir):
     """Use the passthrough module as a way to test mt throughput."""
     # refactor out for additional tests and follow pattern in files:
-    input_dir = os.path.join(data_dir(), 'passthrough/input')
+    input_dir = os.path.join(data_dir(), 'input')
     output_bn = 'tpt_proj_passthrough.tif'
-    expected_fp = os.path.join(data_dir(), 'passthrough/expected/', output_bn)
+    expected_fp = os.path.join(data_dir(), 'expected', output_bn)
     actual_fp = str(tmpdir.join(output_bn))
 
     mt.run(projname='tpt_proj', projdir=input_dir, outdir=str(tmpdir), nproc=nproc,
