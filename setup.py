@@ -7,6 +7,8 @@ from Cython.Distutils import build_ext
 
 from Cython.Compiler import Options
 
+# in the future may want to port to 3; see:
+# https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 Options.language_level = 2 # as in python 2; silences a warning
 
 
