@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from __future__ import print_function
 from __future__ import division
 from builtins import str
@@ -405,6 +407,21 @@ def run_gipsexport(projdir, outdir, **kwargs):
 
 
 def main():
+    """Can be run as a standalone program with eg:
+
+    multitemporal/mt.py --nproc=1 --conf=py3-trial.json --projdir=your-files \
+        --outdir=py3-trial-out --projname=tpt-proj
+
+    This expects input ndvi rasters into your-files/other-dir-name-here/ per
+    gips convention, if your json file `py3-trial.json` looks like this:
+
+        {
+            "compthresh": 0.01,
+            "dperframe": 1,
+            "sources": [{"name": "ndvi", "regexp": "^(\\d{7})_L.._ndvi-toa.tif$", "bandnum": 1}],
+            "steps": [{"module": "passthrough", "params": [], "inputs": ["ndvi"], "output": true}]
+        }
+    """
 
     parser = argparse.ArgumentParser(description='MultiTemporal Processor')
 
