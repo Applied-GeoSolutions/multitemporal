@@ -28,11 +28,13 @@ setup(
     url='https://gitlab.com/rbraswell/multitemporal.git',
     author='Bobby H. Braswell',
     author_email='rbraswell@ags.io',
-    classifiers=[
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Cython :: 0.26',
-    ],
+    # it's not clear what classifiers are appropriate and anyway it only matters for pypi:
+    #classifiers=[
+    #    'Programming Language :: Python :: 2.7',
+    #    'Programming Language :: Cython :: 0.26',
+    #],
     license='GPLv3',
+    python_requires='>=3',
     packages=find_packages(),
     install_requires=[
         'numpy',

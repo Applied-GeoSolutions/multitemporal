@@ -35,3 +35,14 @@ simpletrend.pyx
 summation.pyx
 validmask.pyx
 ```
+
+## Dev Setup
+
+Build a container, set an alias to let you run tests using your host machine's
+working copy, then run the test suite:
+
+```
+$ time docker build . -t mt --no-cache
+$ alias rmt="docker run --rm -it -v ${HOME}/src/multitemporal/:/multitemporal"
+$ rmt mt pytest -vv -s
+```
