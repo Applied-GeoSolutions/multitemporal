@@ -1,3 +1,8 @@
+"""This module accepts two inputs and tries to find a correlation between them.
+
+See test_1.py::test_two_sources.
+"""
+
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -137,10 +142,10 @@ def correlate(np.ndarray[np.float32_t, ndim=4, negative_indices=False] data not 
         else:
             tcrit = critical_t(<int>(count - 2.0))
             slope, intercept, corrcoef, tstat = linearmodel(x, y, missingval)
+            result[0,0,k] = slope
+            result[1,0,k] = intercept
+            result[2,0,k] = corrcoef
 
-        result[0,0,k] = slope
-        result[1,0,k] = intercept
-        result[2,0,k] = corrcoef
         result[3,0,k] = tstat
 
     return result

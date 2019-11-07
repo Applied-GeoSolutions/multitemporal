@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from builtins import range
 from multiprocessing import Pool
 
 import numpy as np
@@ -26,7 +28,7 @@ for i in range(100):
 pool = Pool(processes=3)
 results = pool.map(worker, jobs)
 
-print results
+print(results)
 
 
 

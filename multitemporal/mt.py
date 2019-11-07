@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import argparse
 from copy import deepcopy
 import datetime
@@ -66,7 +74,7 @@ def worker(shared, job):
     for ib, source in enumerate(sources):
         if ib == 0:
             nt = len(source['paths'])
-            nyr = nt/nfr
+            nyr = old_div(nt,nfr)
             data = missing_out + np.zeros((nb, nfr, nyr, npx), dtype='float32')
 
         else:
@@ -100,7 +108,7 @@ def worker(shared, job):
             wgood = np.where(values != source['missing_in'])
             if len(wgood[0]) == 0:
                 continue
-            iyr = ipath / nfr
+            iyr = old_div(ipath, nfr)
             ifr = ipath % nfr
             data[ib, ifr, iyr, wgood] = \
                 source['offset'] + source['scale']*values[wgood]
@@ -139,24 +147,42 @@ def run(projdir, outdir, projname, sources, steps,
         blkrow=10, compthresh=0.1, nproc=1, missing_out=-32768.,
         dperframe=1, ymd=False,
         **kwargs):
+    """Run the processing pipeline defined by `steps`.
+
+    :param projdir:  Where to search for source data
+    :param outdir:  Where to put the outputs
+    :param projname:  Prefix for output files
+    :param sources:  Product types such as 'ndvi', likely from gips outputs
+    :param steps:  Defines the processing pipeline; a series of modules that
+        must implement a standard interface (TODO document this interface).
+    :param blkrow:  dunno lol
+    :param compthresh:  sorta a minimum required ratio of good data to total area
+    :param nproc:  Number of worker processes.
+    :param missing_out:  no-data value to be used in outputs probably.
+    :param dperframe: dunno lol
+    :param ymd: use <year><month><day> if ymd else <year><doy> (why not just pass in the format?)
+    :param kwargs: unused
+    :return: None; see if it worked by try-catching the call
+    """
     global OUTPUT
 
+    # set up by finding sources, organizing them, and configuring the run
     for k, source in enumerate(sources):
         print("source: {}".format(source['name']))
-        paths = reglob(projdir, source['regexp'])
+        source_paths = reglob(projdir, source['regexp'])
 
-        if len(paths) == 0:
-            print "there are no data paths for %s" % projdir
+        if len(source_paths) == 0:
+            print("there are no data paths for %s" % projdir)
             return
 
-        pathdict = {}
+        date_to_source_path = {}
         years = set()
         doys = set()
         initialized = False
 
-        for i, path in enumerate(paths):
-            filename = os.path.split(path)[1]
-            datestr = re.findall(source['regexp'], filename)[0]
+        for i, source_path in enumerate(source_paths):
+            source_bn = os.path.basename(source_path)
+            datestr = re.findall(source['regexp'], source_bn)[0]
             if not ymd:
                 # default: YYYYDDD
                 date = datetime.datetime.strptime(datestr, '%Y%j')
@@ -168,10 +194,10 @@ def run(projdir, outdir, projname, sources, steps,
             doy = int(date.strftime('%j'))
             years.add(year)
             doys.add(doy)
-            pathdict[(year, doy)] = path
+            date_to_source_path[(year, doy)] = source_path
 
             if not initialized:
-                fp = gdal.Open(path)
+                fp = gdal.Open(source_path)
                 try:
                     if 'bandname' in source:
                         band = find_band(fp, source['bandname'])
@@ -190,18 +216,20 @@ def run(projdir, outdir, projname, sources, steps,
                 if 'missing_in' not in source:
                     source['missing_in'] = band.GetNoDataValue()
                 if source['missing_in'] is None:
-                    raise Exception, "There is no missing value"
+                    raise Exception("There is no missing value")
                 if k == 0:
                     proj_check = proj
                     geo_check = geo
                     width_check = width
                     height_check = height
                 else:
+                    # after the first source path establishes projection etc, confirm these values
+                    # all match for the rest of the source paths
                     GEO_TOLER = 0.0001
                     if proj_check != proj or width_check != width or height_check != height \
                        or (np.array([x[1]-x[0] for x in zip(geo, geo_check)]) > GEO_TOLER).any():
-                        raise Exception, "Export contents do not match in size, projection,"\
-                            "or geospatial properties"
+                        raise Exception("Export contents do not match in size, projection,"\
+                            "or geospatial properties")
 
                 initialized = True
 
@@ -217,7 +245,7 @@ def run(projdir, outdir, projname, sources, steps,
                         .format(firstyr_check, firstyr, lastyr_check, lastyr))
                 print('Nota bene:\n\t' + emsg + '\n   This may be OK')
 
-        doys = np.arange(366/dperframe).astype('int') + 1
+        doys = np.arange(old_div(366,dperframe)).astype('int') + 1
         nfr = len(doys)
 
         selpaths = []
@@ -227,17 +255,17 @@ def run(projdir, outdir, projname, sources, steps,
         for year in range(firstyr, lastyr+1):
             for doy in doys:
                 try:
-                    selpaths.append(pathdict[(year, doy)])
+                    selpaths.append(date_to_source_path[(year, doy)])
                     ncomplete += 1
-                except Exception, e:
+                except Exception as e:
                     selpaths.append('')
                 ntotal += 1
 
         source['paths'] = selpaths
         pctcomplete = float(ncomplete)/ntotal
-        print "number of paths", len(selpaths)
-        print "ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
-            ncomplete, ntotal, pctcomplete, firstyr, lastyr
+        print("number of paths", len(selpaths))
+        print("ncomplete, ntotal, pctcomplete, firstyr, lastyr",\
+            ncomplete, ntotal, pctcomplete, firstyr, lastyr)
         if pctcomplete < compthresh:
             msg = ("not enough valid data ({} < {}) percent, for this source"
                    .format(pctcomplete, compthresh))
@@ -252,7 +280,9 @@ def run(projdir, outdir, projname, sources, steps,
 
     for step in steps:
 
-        # get functions and parameters for each step
+        # get functions and parameters for each step by trying to import the
+        # steps in different ways until something works.
+        # TODO however the implementation sorta 'stutters' with unneeded extra steps
         try:
             # TODO: This reserves the name of multitemporal builtin modules.
             #       Perhaps some sort of module renaming for builtin modules
@@ -274,10 +304,12 @@ def run(projdir, outdir, projname, sources, steps,
         if not isinstance(step['inputs'], list):
             step['inputs'] = [step['inputs']]
         for thisinput in step['inputs']:
+            # if this input is in the sources then we know it's a starting point for the pipeline:
             if thisinput in [source['name'] for source in sources]:
-                thisnin = nfr
+                thisnin = nfr # nfr == len(doys)
                 step['initial'] = True
             else:
+                # handle intermediary steps in the pipeline; only one parent is allowed
                 parentsteps = [s for s in steps if s['name']==thisinput]
                 if len(parentsteps) != 1:
                     raise MTConfigError(
@@ -296,12 +328,12 @@ def run(projdir, outdir, projname, sources, steps,
         except:
             step['nyrout'] = nyr
         if step.get('output', False):
-            print "output", mod, (step['nout'], step['nyrout'], height*width)
+            print("output", mod, (step['nout'], step['nyrout'], height*width))
             OUTPUT[step['name']] = sharedmem.empty(
                 (step['nout'], step['nyrout'], height*width), dtype='f4')
             OUTPUT[step['name']][...] = missing_out
 
-    nblocks = height / blkrow
+    nblocks = old_div(height, blkrow)
     if height % blkrow == 0:
         lastblkrow = blkrow
     else:
@@ -324,7 +356,7 @@ def run(projdir, outdir, projname, sources, steps,
     func = partial(worker, shared)
     if nproc > 1:
         results = []
-        num_tasks = len(jobs)
+        num_tasks = len(jobs) # == nblocks every time
         pool = Pool(processes=nproc)
         prog=0
         for i, r in enumerate(pool.imap(func, jobs, 1)):
@@ -375,6 +407,21 @@ def run_gipsexport(projdir, outdir, **kwargs):
 
 
 def main():
+    """Can be run as a standalone program with eg:
+
+    multitemporal/mt.py --nproc=1 --conf=py3-trial.json --projdir=your-files \
+        --outdir=py3-trial-out --projname=tpt-proj
+
+    This expects input ndvi rasters into your-files/other-dir-name-here/ per
+    gips convention, if your json file `py3-trial.json` looks like this:
+
+        {
+            "compthresh": 0.01,
+            "dperframe": 1,
+            "sources": [{"name": "ndvi", "regexp": "^(\\d{7})_L.._ndvi-toa.tif$", "bandnum": 1}],
+            "steps": [{"module": "passthrough", "params": [], "inputs": ["ndvi"], "output": true}]
+        }
+    """
 
     parser = argparse.ArgumentParser(description='MultiTemporal Processor')
 
@@ -428,7 +475,7 @@ def main():
         conf = json.load(sys.stdin)
 
     # override json configuration options with those from CLI
-    args_dict = dict((k,v) for k,v in vars(args).iteritems() if v is not None)
+    args_dict = dict((k,v) for k,v in vars(args).items() if v is not None)
     conf.update(args_dict)
 
     # apply defaults

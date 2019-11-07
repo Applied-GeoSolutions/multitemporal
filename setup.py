@@ -1,9 +1,16 @@
 import imp
 from setuptools import setup, Extension, find_packages
+
+import numpy
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
-import numpy
+from Cython.Compiler import Options
+
+# in the future may want to port to 3; see:
+# https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
+Options.language_level = 2 # as in python 2; silences a warning
+
 
 
 __version__ = imp.load_source('multitemporal.version', 'multitemporal/version.py').__version__
@@ -21,11 +28,13 @@ setup(
     url='https://gitlab.com/rbraswell/multitemporal.git',
     author='Bobby H. Braswell',
     author_email='rbraswell@ags.io',
-    classifiers=[
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Cython :: 0.26',
-    ],
+    # it's not clear what classifiers are appropriate and anyway it only matters for pypi:
+    #classifiers=[
+    #    'Programming Language :: Python :: 2.7',
+    #    'Programming Language :: Cython :: 0.26',
+    #],
     license='GPLv3',
+    python_requires='>=3',
     packages=find_packages(),
     install_requires=[
         'numpy',

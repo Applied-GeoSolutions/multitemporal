@@ -1,7 +1,11 @@
 # Multitemporal 
 (c) 2018 Applied Geosolutions, LLC
 
-This library provides an efficient means of flexibly performing time series analysis on stacks of gridded data. There is a core python application that breaks the processing job into pieces and launches workers to perform the processing. Each worker has a configurable sequence of processing steps. All the inputs and each step are prescribed in a user-conigured JSON files.
+This library provides an efficient means of flexibly performing time series
+analysis on stacks of gridded data. There is a core python application that
+breaks the processing job into pieces and launches workers to perform the
+processing. Each worker has a configurable sequence of processing steps. All
+the inputs and each step are prescribed in a user-conigured JSON files.
 
 Authors:
 
@@ -30,4 +34,16 @@ screen.pyx
 simpletrend.pyx
 summation.pyx
 validmask.pyx
+```
+
+## Dev Setup
+
+Build a container, set an alias to let you run tests using your host machine's
+working copy, then run the test suite:
+
+```
+$ time docker build . -t mt --no-cache
+$ alias rmt="docker run --rm -it -v ${HOME}/src/multitemporal/:/multitemporal"
+$ time rmt mt python3 setup.py build_ext --inplace
+$ rmt mt pytest -vv -s
 ```
