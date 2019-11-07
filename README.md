@@ -44,5 +44,6 @@ working copy, then run the test suite:
 ```
 $ time docker build . -t mt --no-cache
 $ alias rmt="docker run --rm -it -v ${HOME}/src/multitemporal/:/multitemporal"
+$ time rmt mt python3 setup.py build_ext --inplace
 $ rmt mt pytest -vv -s
 ```
